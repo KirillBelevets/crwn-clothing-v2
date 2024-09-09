@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth'
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,8 +18,8 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({
+const googleAuthProvider = new GoogleAuthProvider();
+googleAuthProvider.setCustomParameters({
     prompt: "select_account"
 })
 
@@ -30,10 +30,11 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
 };
 
 export const auth = getAuth();
-export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+export const signInWithGooglePopup = () => signInWithPopup(auth, googleAuthProvider);
 
 export const db = getFirestore();
-export const createUserDocumentFromAuth = async (userAuth) => {
+export const createUserDocumentFromAuth = async (userAuth, additionalInformation = {}) => {
+    if(!userAuth) return;
     const userDocRef = doc(db, 'users', userAuth.uid)
     console.log(userDocRef)
 
@@ -48,7 +49,8 @@ export const createUserDocumentFromAuth = async (userAuth) => {
             await setDoc(userDocRef, {
                 displayName,
                 email,
-                createdAt
+                createdAt,
+                ...additionalInformation,
             });
         } catch (error) {
             console.log('error creating the user', error.message);
@@ -57,4 +59,8 @@ export const createUserDocumentFromAuth = async (userAuth) => {
     return userDocRef;
 }
 
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+    if(!email || !password) return;
 
+    await createUserWithEmailAndPassword(auth, email, password);
+}
